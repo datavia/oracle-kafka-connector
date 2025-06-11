@@ -1,0 +1,15 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'fz303_kafka-connect'
+    static_configs:
+      - targets: ['fz303_kafka-connect:7072']
+
+alerting:
+  alertmanagers:
+    - static_configs:
+      - targets: ['fz303_alertmanager:9093']
+
+rule_files:
+  - "alerts.yml"

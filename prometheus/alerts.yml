@@ -1,0 +1,57 @@
+groups:
+  - name: kafka-connect-alerts
+    rules:
+
+    - alert: KafkaConnectorDown
+      expr: up{job="fz303_kafka-connect"} == 0
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Kafka Connect instance is down"
+        description: "No metrics received from Kafka Connect for more than 1 minute."
+
+    - alert: KafkaConnectRestartedRecently
+      expr: time() - process_start_time_seconds{job="fz303_kafka-connect"} < 300
+      for: 10s
+      labels:
+        severity: warning
+      annotations:
+        summary: "Kafka Connect recently restarted"
+        description: "fz303 Kafka Connect Container  restarted less than 5 minutes ago."
+
+    - alert: KafkaConnectorMaxBatchHit
+      expr: max(kafka_connect_connector_task_metrics_batch_size_max) by (connector) == 100000 
+      for: 10s
+      labels:
+        severity: critical
+      annotations:
+        summary: "Connector {{ $labels.connector }} reached max.batch.size"
+        description: "Connector {{ $labels.connector }} has batch_size = 100,000."
+
+    - alert: KafkaConnectorNotRunning
+      expr: kafka_connect_connector_task_metrics_running_ratio{job="fz303_kafka-connect"} < 1
+      for: 2m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Connector {{ $labels.connector }} is not fully running"
+        description: "Connector {{ $labels.connector }} has running_ratio < 1 for more than 2 minutes, tasks are not fully running."
+
+    - alert: KafkaConnectorHighOffsetCommitFailure
+      expr: kafka_connect_connector_task_metrics_offset_commit_failure_percentage{job="fz303_kafka-connect"} > 5
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High offset commit failure percentage on connector {{ $labels.connector }}"
+        description: "Connector {{ $labels.connector }} offset commit failure percentage is above 5% for over 5 minutes."
+
+    - alert: KafkaConnectorHighPauseRatio
+      expr: kafka_connect_connector_task_metrics_pause_ratio{job="fz303_kafka-connect"} > 0.1
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Connector {{ $labels.connector }} pause ratio is high"
+        description: "Connector {{ $labels.connector }} pause ratio is above 10% for more than 2 minutes."

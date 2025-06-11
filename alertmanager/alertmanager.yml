@@ -1,0 +1,14 @@
+global:
+  smtp_smarthost: <'pochta.domain2.domain1:port'>
+  smtp_from: 'fz303@alert.manager'
+  smtp_require_tls: false
+  smtp_hello: <'edge-node-name.domain3.domain2.domain1'>
+
+route:
+  receiver: email-alert
+
+receivers:
+  - name: email-alert
+    email_configs:
+      - to: <'receiver@domain2.domain1'>
+        send_resolved: true

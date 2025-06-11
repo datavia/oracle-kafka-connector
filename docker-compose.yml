@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+
+  kafka-connect-standalone:
+    user: root
+    build: .
+    image: fz303-kafka-connect:custom
+    container_name: fz303_kafka-connect
+    environment:
+      OCEAN_VAULT_ROLE_ID: ${VAULT_ROLE_ID}
+      OCEAN_VAULT_SECRET_ID: ${VAULT_SECRET_ID}
+      JAVA_TOOL_OPTIONS: "-javaagent:/jmx-exporter/jmx_prometheus_javaagent.jar=7072:/jmx-exporter/config.yaml"
+    volumes:
+      - ./certs:/certs:ro
+      - ./plugins:/plugins:ro
+      - ./connect-standalone.properties:/etc/kafka/connect-standalone.properties
+      - ./oracle-jdbc-sources:/etc/kafka/oracle-jdbc-sources:ro
+      - ./offsets:/tmp
+      - ./start-connect.sh:/start-connect.sh
+      - ./jmx-exporter:/jmx-exporter
+    ports:
+      - "8083:8083"
+      - "7072:7072"
+    networks:
+      - monitor-net
+    command: ["bash", "/start-connect.sh"]
+    restart: always
+
+  prometheus:
+    image: prom/prometheus
+    container_name: fz303_prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus/alerts.yml:/etc/prometheus/alerts.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - monitor-net
+
+  alertmanager:
+    image: prom/alertmanager
+    container_name: fz303_alertmanager
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+    ports:
+      - "9093:9093"
+    networks:
+      - monitor-net
+
+networks:
+  monitor-net:
+    driver: bridge
